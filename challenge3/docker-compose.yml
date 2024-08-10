@@ -1,0 +1,45 @@
+services:
+  web:
+    image: tomcat:9.0
+    volumes:
+      - ./webapp.war:/usr/local/tomcat/webapps/webapp.war
+    depends_on:
+      - db
+  nginx:
+    build: ./nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - node-service
+    env_file:
+      - variables.env
+
+  node-service:
+    build: ./api
+    environment:
+      DB_HOST: db
+      DB_USERNAME: username
+      DB_PASSWORD: password
+      DB_DATABASE: database
+    depends_on:
+      - db
+    expose:
+      - "3000"
+    env_file:
+      - variables.env
+
+  db:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: database
+      MYSQL_USER: username
+      MYSQL_PASSWORD: password
+    build: ./db
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    env_file:
+      - variables.env
